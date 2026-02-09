@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Login Page</title></head>
+<body>
+  <main>
+    <h1>Sign In</h1>
+    <form id="loginForm" action="/auth" method="post">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" placeholder="Enter username">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter password">
+      <select id="role" name="role">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button type="submit" id="loginBtn">Log In</button>
+    </form>
+    <a href="/forgot-password">Forgot password?</a>
+    <a href="/register">Create account</a>
+  </main>
+</body>
+</html>

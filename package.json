@@ -1,0 +1,50 @@
+{
+  "name": "lean-browser",
+  "version": "0.2.0",
+  "description": "Playwright + Readability based page compressor for AI agents",
+  "license": "MIT",
+  "keywords": [
+    "browser",
+    "playwright",
+    "readability",
+    "llm",
+    "ai",
+    "mcp",
+    "web-scraping",
+    "token-budget",
+    "cli"
+  ],
+  "type": "module",
+  "bin": {
+    "lean-browser": "./bin/cli.js",
+    "lean-browser-mcp": "./bin/mcp-server.js"
+  },
+  "scripts": {
+    "start": "node ./bin/cli.js",
+    "demo": "node ./bin/cli.js https://example.com --mode text --tokens 400",
+    "test": "node --test test/**/*.test.js",
+    "test:unit": "node --test test/unit/**/*.test.js",
+    "test:integration": "node --test test/integration/**/*.test.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@mozilla/readability": "^0.6.0",
+    "commander": "^12.1.0",
+    "gpt-3-encoder": "^1.1.4",
+    "jsdom": "^26.0.0",
+    "playwright": "^1.50.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.0",
+    "prettier": "^3.8.1"
+  }
+}
