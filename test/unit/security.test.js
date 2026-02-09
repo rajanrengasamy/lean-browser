@@ -34,6 +34,18 @@ describe('Security - URL Validation', () => {
         (err) => err instanceof SSRFError && err.reason === 'blocked_protocol',
       );
     });
+
+    it('should reject data: protocol by default', () => {
+      assert.throws(
+        () => validateURL('data:text/plain,hello'),
+        (err) => err instanceof SSRFError && err.reason === 'blocked_protocol',
+      );
+    });
+
+    it('should allow data: protocol when allowData is enabled', () => {
+      const url = validateURL('data:text/plain,hello', { allowData: true });
+      assert.strictEqual(url.protocol, 'data:');
+    });
   });
 
   describe('Private IP blocking', () => {

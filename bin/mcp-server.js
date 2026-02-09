@@ -24,7 +24,7 @@ import {
 
 const server = new McpServer({
   name: 'lean-browser',
-  version: '0.2.0',
+  version: '0.3.0',
 });
 
 const commonInputSchema = {

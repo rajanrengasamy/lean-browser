@@ -76,6 +76,13 @@ export class BrowserPool {
     }
   }
 
+  // Reset context/page to guarantee clean state between pooled requests.
+  async resetInstanceState(instance) {
+    await instance.context?.close().catch(() => {});
+    instance.context = await instance.browser.newContext({ userAgent: this.userAgent });
+    instance.page = await instance.context.newPage();
+  }
+
   // Health check routine that runs periodically
   startHealthCheck() {
     if (this.healthCheckTimer) {
@@ -189,17 +196,8 @@ export class BrowserPool {
     // Update metadata
     instance.metadata.lastUsedAt = Date.now();
 
-    // Close all pages except the context's default page
     try {
-      const pages = instance.context.pages();
-      for (let i = 1; i < pages.length; i++) {
-        await pages[i].close().catch(() => {});
-      }
-
-      // Navigate the main page to about:blank to clean state
-      if (pages[0]) {
-        await pages[0].goto('about:blank').catch(() => {});
-      }
+      await this.resetInstanceState(instance);
     } catch {
       // If cleanup fails, destroy the instance
       await this.destroyInstance(instance, 'cleanup failed');

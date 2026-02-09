@@ -110,7 +110,7 @@ export function parseActionSpec(specString) {
   if (!specString || typeof specString !== 'string') return [];
 
   const actions = [];
-  const parts = specString.split(',');
+  const parts = specString.split(/,(?=\s*(?:click|submit|type|select|wait|navigate|scroll):)/i);
 
   for (const part of parts) {
     const trimmed = part.trim();

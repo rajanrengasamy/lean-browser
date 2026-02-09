@@ -1,6 +1,8 @@
 import { estimateTokens, truncateToTokenLimit } from './tokenizer.js';
 import { toParagraphs, safeTruncate } from './utils.js';
 
+const TRUNCATION_MARKER = '\n\n[lean-browser: truncated to token budget]';
+
 export async function formatText({ url, finalUrl, status }, { article }, { maxTokens } = {}) {
   const lines = [];
   const t = article?.title ? `# ${article.title}` : '# (untitled)';
@@ -67,32 +69,94 @@ async function fitObjectToBudget(
     break;
   }
 
-  // Then: binary search article.text length.
+  // Then: binary search text field length.
   const originalText = String(getAt(obj, textPath) ?? '');
-  let lo = 0;
-  let hi = originalText.length;
-  let best = 0;
+  async function findFittingText(includeMarker) {
+    let lo = 0;
+    let hi = originalText.length;
+    let bestText = null;
+    let bestTokens = Infinity;
 
-  while (lo <= hi) {
-    const mid = Math.floor((lo + hi) / 2);
-    const candidateText = originalText.slice(0, mid).trimEnd() + '\n\n[lean-browser: truncated to token budget]';
-    setAt(obj, textPath, candidateText);
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      const candidateText = includeMarker
+        ? originalText.slice(0, mid).trimEnd() + TRUNCATION_MARKER
+        : originalText.slice(0, mid);
+      setAt(obj, textPath, candidateText);
 
-    const tokens = await estimateTokens(JSON.stringify(obj, null, 2));
-    if (tokens <= maxTokens) {
-      best = mid;
-      lo = mid + 1;
-    } else {
-      hi = mid - 1;
+      const tokens = await estimateTokens(JSON.stringify(obj, null, 2));
+      if (tokens <= maxTokens) {
+        bestText = candidateText;
+        bestTokens = tokens;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
     }
+
+    if (bestText == null) {
+      return null;
+    }
+
+    return { text: bestText, tokens: bestTokens };
   }
 
-  const finalText = originalText.slice(0, best).trimEnd() + '\n\n[lean-browser: truncated to token budget]';
-  setAt(obj, textPath, finalText);
+  const withMarker = await findFittingText(true);
+  if (withMarker) {
+    setAt(obj, textPath, withMarker.text);
+    return { obj, truncated: true, tokens: withMarker.tokens };
+  }
+
+  const withoutMarker = await findFittingText(false);
+  if (withoutMarker) {
+    setAt(obj, textPath, withoutMarker.text);
+    return { obj, truncated: true, tokens: withoutMarker.tokens };
+  }
+
+  // Budget may be too small to fit marker or any text body.
+  setAt(obj, textPath, '');
   truncated = true;
 
   const finalTokens = await estimateTokens(JSON.stringify(obj, null, 2));
   return { obj, truncated, tokens: finalTokens };
+}
+
+async function finalizeJsonObject(obj, { truncated, maxTokens, fallbackCandidates = [] }) {
+  obj.truncated = truncated;
+  obj.tokens = 0;
+
+  let stableText = '';
+  let stableTokens = 0;
+
+  // Stabilize self-referential "tokens" field.
+  for (let i = 0; i < 4; i++) {
+    stableText = JSON.stringify(obj, null, 2);
+    stableTokens = await estimateTokens(stableText);
+    if (obj.tokens === stableTokens) {
+      break;
+    }
+    obj.tokens = stableTokens;
+  }
+
+  if (!Number.isFinite(maxTokens) || stableTokens <= maxTokens) {
+    return { text: stableText, tokens: stableTokens, truncated: Boolean(obj.truncated) };
+  }
+
+  let bestFallback = { text: stableText, tokens: stableTokens, truncated: true };
+  for (const candidate of fallbackCandidates) {
+    const candidateText = JSON.stringify(candidate, null, 2);
+    const candidateTokens = await estimateTokens(candidateText);
+    const result = { text: candidateText, tokens: candidateTokens, truncated: true };
+
+    if (candidateTokens <= maxTokens) {
+      return result;
+    }
+    if (candidateTokens < bestFallback.tokens) {
+      bestFallback = result;
+    }
+  }
+
+  return bestFallback;
 }
 
 export async function formatJson({ url, finalUrl, status, fetchedTitle }, { article }, { maxTokens } = {}) {
@@ -115,9 +179,13 @@ export async function formatJson({ url, finalUrl, status, fetchedTitle }, { arti
     textPath: ['article', 'text'],
   });
 
-  fit.obj.truncated = fit.truncated;
-  fit.obj.tokens = fit.tokens;
-  return { text: JSON.stringify(fit.obj, null, 2), truncated: fit.truncated, tokens: fit.tokens };
+  const finalized = await finalizeJsonObject(fit.obj, {
+    truncated: fit.truncated,
+    maxTokens,
+    fallbackCandidates: [{ url: finalUrl ?? url, truncated: true }, { truncated: true }, {}],
+  });
+
+  return finalized;
 }
 
 export async function formatInteractive(
@@ -150,7 +218,11 @@ export async function formatInteractive(
     textPath: ['view', 'text'],
   });
 
-  fit.obj.truncated = fit.truncated;
-  fit.obj.tokens = fit.tokens;
-  return { text: JSON.stringify(fit.obj, null, 2), truncated: fit.truncated, tokens: fit.tokens };
+  const finalized = await finalizeJsonObject(fit.obj, {
+    truncated: fit.truncated,
+    maxTokens,
+    fallbackCandidates: [{ url: finalUrl ?? url, truncated: true }, { truncated: true }, {}],
+  });
+
+  return finalized;
 }

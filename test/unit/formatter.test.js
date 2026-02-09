@@ -56,6 +56,7 @@ describe('formatJson', () => {
   it('respects token budget', async () => {
     const result = await formatJson(meta, { article: mockArticle }, { maxTokens: 30 });
     assert.equal(result.truncated, true);
+    assert.ok(result.tokens <= 30);
   });
 });
 
@@ -77,5 +78,6 @@ describe('formatInteractive', () => {
   it('truncates elements when budget is tight', async () => {
     const result = await formatInteractive(meta, { article: mockArticle, elements: mockElements }, { maxTokens: 30 });
     assert.equal(result.truncated, true);
+    assert.ok(result.tokens <= 30);
   });
 });

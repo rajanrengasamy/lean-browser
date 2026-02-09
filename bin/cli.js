@@ -48,7 +48,7 @@ const program = new Command();
 program
   .name('lean-browser')
   .description('Fetch a webpage with Playwright and compress it for LLM consumption')
-  .version('0.2.0')
+  .version('0.3.0')
   .showHelpAfterError();
 
 // ── Default: fetch command (backward compatible) ──────────────────────

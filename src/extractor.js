@@ -197,10 +197,40 @@ export function buildElementMap(elements) {
 }
 
 export function extractAllFromHtml(html, url, { enableFallback = true } = {}) {
+  let extractionError = null;
+
   try {
     const dom = buildDom(html, url);
-    const article = extractArticleFromDom(dom, { enableFallback });
+    let article = null;
+
+    try {
+      article = extractArticleFromDom(dom, { enableFallback });
+    } catch (error) {
+      if (error instanceof ExtractionError) {
+        extractionError = error;
+      } else {
+        throw error;
+      }
+    }
+
     const elements = extractInteractiveElements(dom);
+
+    // Graceful fallback for highly interactive pages with little/no readable text.
+    if (!article) {
+      if (!enableFallback || elements.length === 0) {
+        throw extractionError ?? new ExtractionError(url, 'Insufficient content extracted from page');
+      }
+
+      const doc = dom.window.document;
+      article = {
+        title: normalizeWhitespace(doc.title ?? ''),
+        byline: null,
+        excerpt: null,
+        text: '',
+        fallback: true,
+      };
+    }
+
     return { article, elements };
   } catch (error) {
     if (error instanceof ExtractionError) {

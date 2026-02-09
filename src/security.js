@@ -108,6 +108,7 @@ function matchesPattern(hostname, pattern) {
  * @param {object} options - Validation options
  * @param {boolean} options.allowPrivateIPs - Allow private IP addresses (default: false)
  * @param {boolean} options.allowMetadata - Allow metadata endpoints (default: false)
+ * @param {boolean} options.allowData - Allow data: URLs (default: false)
  * @param {string[]} options.whitelist - Additional whitelist patterns (overrides env)
  * @param {string[]} options.blacklist - Additional blacklist patterns (overrides env)
  * @throws {SSRFError} If URL is not allowed
@@ -117,6 +118,7 @@ export function validateURL(urlString, options = {}) {
   const {
     allowPrivateIPs = false,
     allowMetadata = false,
+    allowData = false,
     whitelist = getWhitelist(),
     blacklist = getBlacklist(),
   } = options;
@@ -132,6 +134,17 @@ export function validateURL(urlString, options = {}) {
   // Block file:// protocol
   if (url.protocol === 'file:') {
     throw new SSRFError('file:// protocol is not allowed', { url: urlString, reason: 'blocked_protocol' });
+  }
+
+  // Allow data: URLs only when explicitly enabled.
+  if (url.protocol === 'data:') {
+    if (!allowData) {
+      throw new SSRFError('Protocol data: is not allowed (only http/https)', {
+        url: urlString,
+        reason: 'blocked_protocol',
+      });
+    }
+    return url;
   }
 
   // Only allow http/https

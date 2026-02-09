@@ -21,6 +21,17 @@
 - **Action DSL**: Support for 8 action types (click, type, select, submit, wait, navigate, scroll)
 - **Session Management**: Auto-expiring sessions with 10-minute TTL and cleanup
 
+### Fixed
+
+- Fixed one-shot fetch lifecycle hangs by making pooled fetch reuse opt-in for programmatic fetches (`usePool: false` default).
+- Fixed pooled browser state contamination by resetting context/page on pool release.
+- Fixed text snapshot parsing crashes in MCP and CLI handlers that previously assumed JSON snapshots.
+- Fixed token budgeting edge cases to enforce strict budgets, including tiny budget scenarios.
+- Fixed SSRF gap by validating redirect final URLs in addition to input URLs.
+- Fixed session integration regressions by selectively allowing `data:` URLs in controlled session-start paths while keeping default protocol restrictions strict.
+- Fixed action parser behavior for `type` payloads containing commas.
+- Fixed CLI and MCP server version reporting mismatch (`0.3.0`).
+
 ### Enhanced
 
 - MCP server now exposes 9 tools (up from 3) for comprehensive browser automation

@@ -8,6 +8,10 @@ const SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_SESSIONS = parseInt(process.env.LEAN_BROWSER_MAX_SESSIONS || '10', 10);
 const SESSION_DIR = process.env.LEAN_BROWSER_SESSION_DIR || '/tmp/lean-browser-sessions';
 
+function isDataUrl(url) {
+  return typeof url === 'string' && url.trim().toLowerCase().startsWith('data:');
+}
+
 // Ensure session directory exists
 try {
   mkdirSync(SESSION_DIR, { recursive: true });
@@ -180,7 +184,10 @@ export async function createSession(
     extraHeaders,
   });
 
-  const nav = await navigateAndWait(page, url, { timeoutMs });
+  const nav = await navigateAndWait(page, url, {
+    timeoutMs,
+    allowDataURLs: isDataUrl(url),
+  });
 
   const session = {
     id,

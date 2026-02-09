@@ -3,6 +3,18 @@ import { extractAllFromHtml, buildElementMap } from '../src/extractor.js';
 import { parseActionSpec, validateAction, ActionExecutor } from '../src/actions.js';
 import { captureSnapshot } from '../src/snapshot.js';
 
+function parseSnapshotPayload(snapshotText, mode) {
+  if (mode === 'text') {
+    return snapshotText;
+  }
+
+  try {
+    return JSON.parse(snapshotText);
+  } catch {
+    return snapshotText;
+  }
+}
+
 export async function handleSessionCommand(subcommand, opts) {
   switch (subcommand) {
     case 'start':
@@ -67,7 +79,7 @@ async function handleSnapshot(opts) {
     maxTokens: opts.tokens,
   });
 
-  return JSON.parse(snap.text);
+  return parseSnapshotPayload(snap.text, opts.mode ?? 'interactive');
 }
 
 async function handleClose(opts) {

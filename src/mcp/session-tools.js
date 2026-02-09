@@ -4,6 +4,18 @@ import { extractAllFromHtml, buildElementMap } from '../extractor.js';
 import { ActionExecutor, parseActionSpec, validateAction } from '../actions.js';
 import { captureSnapshot } from '../snapshot.js';
 
+function parseSnapshotPayload(snapshotText, mode) {
+  if (mode === 'text') {
+    return snapshotText;
+  }
+
+  try {
+    return JSON.parse(snapshotText);
+  } catch {
+    return snapshotText;
+  }
+}
+
 /**
  * Schema for browser_session_start tool
  */
@@ -81,7 +93,7 @@ export async function handleBrowserSessionStart({
     url: result.url,
     finalUrl: result.finalUrl,
     status: result.status,
-    snapshot: JSON.parse(snapshot.text),
+    snapshot: parseSnapshotPayload(snapshot.text, snapshotMode),
     message: 'Session created successfully. Use this sessionId for subsequent actions.',
   };
 
@@ -137,7 +149,7 @@ export async function handleBrowserSessionExecute({
       elementId: result.elementId,
       ok: result.ok,
     },
-    snapshot: JSON.parse(snapshot.text),
+    snapshot: parseSnapshotPayload(snapshot.text, snapshotMode),
   };
 
   return {
@@ -158,7 +170,7 @@ export async function handleBrowserSessionSnapshot({ sessionId, mode = 'interact
   const response = {
     sessionId,
     currentUrl: page.url(),
-    snapshot: JSON.parse(snapshot.text),
+    snapshot: parseSnapshotPayload(snapshot.text, mode),
   };
 
   return {

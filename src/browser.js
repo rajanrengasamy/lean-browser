@@ -1,7 +1,7 @@
 import { chromium, devices } from 'playwright';
 import { readFile, writeFile } from 'node:fs/promises';
 import { shouldBlockRequest, shouldBlockResourceType } from './blocklists.js';
-import { validateURL } from './security.js';
+import { validateURL, SSRFError } from './security.js';
 import { classifyError, detectAntiBot, BrowserCrashError } from './errors.js';
 import { withAutoRetry } from './retry.js';
 import { getGlobalPool } from './browser-pool.js';
@@ -97,10 +97,14 @@ export async function launchBrowser({
   return { browser, context, page };
 }
 
-export async function navigateAndWait(page, url, { timeoutMs = 45000, skipSSRFCheck = false } = {}) {
+export async function navigateAndWait(
+  page,
+  url,
+  { timeoutMs = 45000, skipSSRFCheck = false, allowDataURLs = false } = {},
+) {
   // Validate URL for SSRF protection unless explicitly skipped
   if (!skipSSRFCheck) {
-    validateURL(url);
+    validateURL(url, { allowData: allowDataURLs });
   }
 
   try {
@@ -112,6 +116,9 @@ export async function navigateAndWait(page, url, { timeoutMs = 45000, skipSSRFCh
     await page.waitForLoadState('networkidle', { timeout: Math.min(timeoutMs, 15000) }).catch(() => {});
 
     const finalUrl = page.url();
+    if (!skipSSRFCheck) {
+      validateURL(finalUrl, { allowData: allowDataURLs });
+    }
     const title = await page.title().catch(() => undefined);
     const status = resp?.status();
     const html = await page.content();
@@ -124,6 +131,10 @@ export async function navigateAndWait(page, url, { timeoutMs = 45000, skipSSRFCh
 
     return { finalUrl, title, status };
   } catch (error) {
+    if (error instanceof SSRFError) {
+      throw error;
+    }
+
     // Check if browser crashed
     if (page.isClosed()) {
       throw new BrowserCrashError(url, error);
@@ -192,7 +203,7 @@ export async function fetchRenderedHtml(
     extraHeaders = {},
     enableRetry = true,
     onRetry = null,
-    usePool = true,
+    usePool = false,
   } = {},
 ) {
   // Use pool if enabled and no special options are set
@@ -237,15 +248,19 @@ export async function fetchRenderedHtml(
       context = launchResult.context;
       page = launchResult.page;
 
-      // Setup browser crash detection
-      browser.on('disconnected', () => {
-        if (page && !page.isClosed()) {
-          throw new BrowserCrashError(url, new Error('Browser process disconnected'));
-        }
-      });
+      let browserCrashError = null;
+      const onDisconnected = () => {
+        browserCrashError = new BrowserCrashError(url, new Error('Browser process disconnected'));
+      };
+      browser.once('disconnected', onDisconnected);
 
       const { finalUrl, title, status } = await navigateAndWait(page, url, { timeoutMs });
       const html = await page.content();
+      browser.off('disconnected', onDisconnected);
+
+      if (browserCrashError) {
+        throw browserCrashError;
+      }
 
       // Get blocked request count if available
       const blockedCount = page._blockedRequestCount ? page._blockedRequestCount() : 0;

@@ -4,6 +4,18 @@ import { extractAllFromHtml, buildElementMap } from '../extractor.js';
 import { ActionExecutor, parseActionSpec, validateAction } from '../actions.js';
 import { captureSnapshot } from '../snapshot.js';
 
+function parseSnapshotPayload(snapshotText, mode) {
+  if (mode === 'text') {
+    return snapshotText;
+  }
+
+  try {
+    return JSON.parse(snapshotText);
+  } catch {
+    return snapshotText;
+  }
+}
+
 /**
  * Schema for execute_browser_action tool
  */
@@ -91,7 +103,7 @@ export async function handleExecuteBrowserAction({
         url: r.url,
         finalUrl: r.finalUrl,
       })),
-      snapshot: JSON.parse(snapshot.text),
+      snapshot: parseSnapshotPayload(snapshot.text, snapshotMode),
     };
 
     return {

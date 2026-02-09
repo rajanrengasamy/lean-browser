@@ -76,6 +76,13 @@ describe('parseActionSpec', () => {
     const actions = parseActionSpec('type:e1:user:pass');
     assert.equal(actions[0].value, 'user:pass');
   });
+
+  it('handles type value containing commas', () => {
+    const actions = parseActionSpec('type:e1:Hello, world,submit:e2');
+    assert.equal(actions.length, 2);
+    assert.equal(actions[0].value, 'Hello, world');
+    assert.equal(actions[1].type, 'submit');
+  });
 });
 
 describe('validateAction', () => {

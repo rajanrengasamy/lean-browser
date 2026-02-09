@@ -36,8 +36,13 @@ describe('truncateToTokenLimit', () => {
     const longText = 'word '.repeat(500);
     const result = await truncateToTokenLimit(longText, 50);
     assert.equal(result.truncated, true);
-    assert.ok(result.text.includes('[lean-browser: truncated to token budget]'));
-    assert.ok(result.tokens <= 50 + 20); // allow some slack for truncation marker
+    assert.ok(result.tokens <= 50);
+  });
+
+  it('stays within strict tiny budgets', async () => {
+    const result = await truncateToTokenLimit('A very long string that must be cut aggressively.', 1);
+    assert.equal(result.truncated, true);
+    assert.ok(result.tokens <= 1);
   });
 
   it('returns full text when limit is Infinity', async () => {
