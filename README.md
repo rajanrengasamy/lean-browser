@@ -4,17 +4,39 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 
-Playwright + Readability page fetcher/compressor for AI agents.
+**Give your AI agent eyes on the web — without feeding it the entire internet.**
 
-`lean-browser` renders real pages (including JS), extracts useful content, and returns token-budgeted output for LLM workflows. It ships as:
+lean-browser renders real web pages (JavaScript and all), strips out the noise, and returns clean, token-budgeted content that LLMs can actually use. No more dumping raw HTML into a context window and hoping for the best.
 
-- CLI: `lean-browser`
-- MCP server: `lean-browser-mcp`
-- Programmatic library modules under `src/`
+### Why this exists
+
+Every AI agent that browses the web hits the same wall: real pages are bloated. A typical news article is 200KB of HTML, ads, trackers, nav bars, and cookie banners — but only 2KB of actual content. Feed that raw HTML to an LLM and you're burning tokens on `<div class="sidebar-ad-wrapper">` instead of the information your agent needs.
+
+Existing tools either skip JavaScript (missing half the web), return unstructured dumps, or give you no control over output size. lean-browser solves this by running a real Chromium browser under the hood, then using Mozilla's Readability algorithm and custom extraction to return just the content — formatted, structured, and cut to fit your token budget.
+
+### Who this is for
+
+- **AI agent developers** — Give your agents reliable web access with predictable token costs. Works with any LLM framework.
+- **MCP tool authors** — Ships as a ready-to-use MCP server (`lean-browser-mcp`) that plugs directly into Claude Desktop, Claude Code, or any MCP client. Ten tools out of the box.
+- **LLM pipeline builders** — Programmatic API for batch processing, content extraction, and multi-step browser workflows with session support.
+- **Anyone tired of `curl | html-to-text`** — If you've been piping curl output through a chain of sed commands and prayers, this is for you.
+
+### What you get
+
+- **Real browser rendering** — Playwright + Chromium. JavaScript-rendered SPAs, login flows, infinite scroll — it all works.
+- **Three output modes** — `text` (clean markdown), `json` (structured blocks), `interactive` (elements with selectors for automation).
+- **Token budgets** — Set a hard cap. Output gets intelligently truncated, not naively chopped.
+- **Browser actions** — Click, type, scroll, navigate. Multi-step workflows with persistent sessions.
+- **Screenshots** — Full-page or viewport PNGs when your agent needs to see, not just read.
+- **SSRF protection** — Built-in safeguards against server-side request forgery. Private IPs, cloud metadata endpoints, and redirect chains are all handled.
+- **Browser pooling** — Opt-in connection reuse for high-throughput scenarios. One-shot mode for everything else.
+
+Ships as a **CLI** (`lean-browser`), an **MCP server** (`lean-browser-mcp`), and a **programmatic Node.js library**.
+
+---
 
 ## Table of Contents
 
-- [What It Does](#what-it-does)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [CLI](#cli)
@@ -28,20 +50,6 @@ Playwright + Readability page fetcher/compressor for AI agents.
 - [Development](#development)
 - [Publishing to npm](#publishing-to-npm)
 - [License](#license)
-
-## What It Does
-
-- Executes pages in Chromium (Playwright)
-- Extracts article-like content with Readability + DOM cleanup
-- Returns one of 3 output modes:
-  - `text`: human-readable markdown-like text
-  - `json`: structured blocks
-  - `interactive`: text + actionable elements (IDs/selectors)
-- Supports token budgets (`--tokens` / `maxTokens`)
-- Supports actions: click, type, select, submit, wait, navigate, scroll
-- Supports long-lived browser sessions for multi-step flows
-- Supports screenshots (PNG)
-- Includes SSRF protections
 
 ## Installation
 
@@ -359,7 +367,7 @@ Use current release (`0.3.0+`) where one-shot pooling defaults are fixed. If emb
 ## Development
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/lean-browser.git
+git clone https://github.com/rajanrengasamy/lean-browser.git
 cd lean-browser
 npm install
 npx playwright install chromium

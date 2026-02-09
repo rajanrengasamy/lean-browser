@@ -16,8 +16,8 @@
   ],
   "type": "module",
   "bin": {
-    "lean-browser": "./bin/cli.js",
-    "lean-browser-mcp": "./bin/mcp-server.js"
+    "lean-browser": "bin/cli.js",
+    "lean-browser-mcp": "bin/mcp-server.js"
   },
   "scripts": {
     "start": "node ./bin/cli.js",
