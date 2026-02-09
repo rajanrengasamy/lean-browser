@@ -1,4 +1,4 @@
-import { fetchRenderedHtml } from '../browser.js';
+import { fetchRenderedHtml, takeScreenshot } from '../browser.js';
 import { extractAllFromHtml } from '../extractor.js';
 import { formatText, formatJson, formatInteractive } from '../formatter.js';
 
@@ -43,5 +43,22 @@ export async function handleFetchPageInteractive({ url, maxTokens = 1200, timeou
 
   return {
     content: [{ type: 'text', text: out.text }],
+  };
+}
+
+export async function handleFetchPageScreenshot({ url, fullPage = false, timeout = 45000 }) {
+  const result = await takeScreenshot(url, {
+    timeoutMs: timeout,
+    fullPage,
+  });
+
+  return {
+    content: [
+      {
+        type: 'image',
+        data: result.screenshot,
+        mimeType: 'image/png',
+      },
+    ],
   };
 }

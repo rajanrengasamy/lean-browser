@@ -1,3 +1,5 @@
+import { validateURL } from './security.js';
+
 export class ActionError extends Error {
   constructor(message, { action, cause } = {}) {
     super(message);
@@ -83,6 +85,12 @@ function parseOneAction(spec) {
 
     case 'navigate':
       if (!rest.trim()) throw new ValidationError(`navigate requires a URL: "${spec}"`);
+      // Validate URL for SSRF protection
+      try {
+        validateURL(rest.trim());
+      } catch (err) {
+        throw new ValidationError(`Invalid URL for navigate: ${err.message}`, { type: 'navigate', url: rest.trim() });
+      }
       return { type: 'navigate', url: rest.trim() };
 
     case 'scroll': {
@@ -230,6 +238,9 @@ export class ActionExecutor {
   }
 
   async navigate({ url }) {
+    // Validate URL for SSRF protection
+    validateURL(url);
+
     await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: this.defaultTimeoutMs * 3 });
     await this.page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
     return { type: 'navigate', url, finalUrl: this.page.url(), ok: true };

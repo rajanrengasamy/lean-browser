@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { cssPath, isProbablyNoiseClass, normalizeWhitespace, safeTruncate } from './utils.js';
+import { ExtractionError } from './errors.js';
 
 function removeAll(doc, selector) {
   doc.querySelectorAll(selector).forEach((n) => n.remove());
@@ -38,30 +39,60 @@ export function pruneDocument(doc) {
   removeComments(doc);
 }
 
-export function extractArticleFromDom(dom) {
-  const doc = dom.window.document;
-  pruneDocument(doc);
+export function extractArticleFromDom(dom, { enableFallback = true } = {}) {
+  try {
+    const doc = dom.window.document;
+    pruneDocument(doc);
 
-  const reader = new Readability(doc);
-  const article = reader.parse();
+    let article = null;
+    let readabilityFailed = false;
 
-  if (!article) {
-    // Fallback: plain body text.
-    const fallbackText = normalizeWhitespace(doc.body?.textContent ?? '');
+    // Try Readability extraction
+    try {
+      const reader = new Readability(doc);
+      article = reader.parse();
+    } catch {
+      readabilityFailed = true;
+      // Continue to fallback if enabled
+    }
+
+    if (!article) {
+      if (!enableFallback) {
+        throw new ExtractionError(
+          dom.window.location.href,
+          readabilityFailed ? 'Readability parsing failed' : 'No article content found',
+        );
+      }
+
+      // Fallback: plain body text with graceful degradation
+      const fallbackText = normalizeWhitespace(doc.body?.textContent ?? '');
+
+      if (!fallbackText || fallbackText.length < 10) {
+        throw new ExtractionError(dom.window.location.href, 'Insufficient content extracted from page');
+      }
+
+      return {
+        title: normalizeWhitespace(doc.title ?? ''),
+        byline: null,
+        excerpt: safeTruncate(fallbackText, 280),
+        text: fallbackText,
+        fallback: true, // Flag to indicate fallback was used
+      };
+    }
+
     return {
-      title: normalizeWhitespace(doc.title ?? ''),
-      byline: null,
-      excerpt: safeTruncate(fallbackText, 280),
-      text: fallbackText,
+      title: article.title ?? normalizeWhitespace(doc.title ?? ''),
+      byline: article.byline ?? null,
+      excerpt: article.excerpt ?? null,
+      text: normalizeWhitespace(article.textContent ?? ''),
+      fallback: false,
     };
+  } catch (error) {
+    if (error instanceof ExtractionError) {
+      throw error;
+    }
+    throw new ExtractionError(dom.window.location.href, error.message, error);
   }
-
-  return {
-    title: article.title ?? normalizeWhitespace(doc.title ?? ''),
-    byline: article.byline ?? null,
-    excerpt: article.excerpt ?? null,
-    text: normalizeWhitespace(article.textContent ?? ''),
-  };
 }
 
 function labelFromDocument(doc, el) {
@@ -165,9 +196,16 @@ export function buildElementMap(elements) {
   return map;
 }
 
-export function extractAllFromHtml(html, url) {
-  const dom = buildDom(html, url);
-  const article = extractArticleFromDom(dom);
-  const elements = extractInteractiveElements(dom);
-  return { article, elements };
+export function extractAllFromHtml(html, url, { enableFallback = true } = {}) {
+  try {
+    const dom = buildDom(html, url);
+    const article = extractArticleFromDom(dom, { enableFallback });
+    const elements = extractInteractiveElements(dom);
+    return { article, elements };
+  } catch (error) {
+    if (error instanceof ExtractionError) {
+      throw error;
+    }
+    throw new ExtractionError(url, `Failed to extract content: ${error.message}`, error);
+  }
 }
