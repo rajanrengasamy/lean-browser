@@ -22,9 +22,9 @@
   "scripts": {
     "start": "node ./bin/cli.js",
     "demo": "node ./bin/cli.js https://example.com --mode text --tokens 400",
-    "test": "node --test test/**/*.test.js",
-    "test:unit": "node --test test/unit/**/*.test.js",
-    "test:integration": "node --test test/integration/**/*.test.js",
+    "test": "node --test test/*.test.js test/unit/*.test.js test/integration/*.test.js",
+    "test:unit": "node --test test/unit/*.test.js",
+    "test:integration": "node --test test/integration/*.test.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
