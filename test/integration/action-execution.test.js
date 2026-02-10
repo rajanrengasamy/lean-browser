@@ -202,8 +202,8 @@ describe('Action Execution Integration', () => {
       await executor.executeAll(actions);
       const elapsed = Date.now() - startTime;
 
-      // Should wait at least 1 second
-      assert.ok(elapsed >= 1000);
+      // Allow 50ms tolerance for CI timer resolution
+      assert.ok(elapsed >= 950, `wait elapsed ${elapsed}ms, expected >= 950ms`);
     });
   });
 
