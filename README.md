@@ -108,19 +108,19 @@ lean-browser https://example.com --headers '{"Accept-Language":"fr-FR"}'
 
 Fetch options:
 
-| Option              | Default | Description                                         |
-| ------------------- | ------- | --------------------------------------------------- |
-| `--mode`            | `text`  | `text`, `json`, `interactive`                       |
-| `--tokens`          | `1200`  | Maximum token budget                                |
-| `--timeout`         | `45000` | Navigation timeout in ms                            |
-| `--headed`          | `false` | Run visible browser                                 |
-| `--viewport`        | -       | `WIDTHxHEIGHT`                                      |
-| `--device`          | -       | Playwright device name                              |
-| `--mobile`          | `false` | iPhone 13 emulation                                 |
-| `--cookies`         | -       | Load/save cookie JSON file                          |
-| `--block-ads`       | `false` | Block ad/tracker requests                           |
+| Option              | Default | Description                                          |
+| ------------------- | ------- | ---------------------------------------------------- |
+| `--mode`            | `text`  | `text`, `json`, `interactive`                        |
+| `--tokens`          | `1200`  | Maximum token budget                                 |
+| `--timeout`         | `45000` | Navigation timeout in ms                             |
+| `--headed`          | `false` | Run visible browser                                  |
+| `--viewport`        | -       | `WIDTHxHEIGHT`                                       |
+| `--device`          | -       | Playwright device name                               |
+| `--mobile`          | `false` | iPhone 13 emulation                                  |
+| `--cookies`         | -       | Load/save cookie JSON file                           |
+| `--block-ads`       | `false` | Block ad/tracker requests                            |
 | `--block-resources` | -       | Comma-separated types: `image,font,stylesheet,media` |
-| `--headers`         | -       | JSON headers object                                 |
+| `--headers`         | -       | JSON headers object                                  |
 
 ### Screenshot
 
@@ -175,16 +175,16 @@ lean-browser session close --session "$SESSION"
 
 Supported actions:
 
-| Action      | Syntax                 | Description                |
-| ----------- | ---------------------- | -------------------------- |
-| Click       | `click:e1`             | Click element `e1`         |
-| Type        | `type:e2:value`        | Fill input `e2`            |
-| Type (slow) | `type:e2:value:slow`   | Type with delay            |
-| Select      | `select:e3:option`     | Select option              |
-| Submit      | `submit:e4`            | Submit containing form     |
-| Wait        | `wait:2000`            | Wait milliseconds          |
-| Navigate    | `navigate:https://...` | Navigate to URL            |
-| Scroll      | `scroll:500`           | Scroll by pixels           |
+| Action      | Syntax                 | Description            |
+| ----------- | ---------------------- | ---------------------- |
+| Click       | `click:e1`             | Click element `e1`     |
+| Type        | `type:e2:value`        | Fill input `e2`        |
+| Type (slow) | `type:e2:value:slow`   | Type with delay        |
+| Select      | `select:e3:option`     | Select option          |
+| Submit      | `submit:e4`            | Submit containing form |
+| Wait        | `wait:2000`            | Wait milliseconds      |
+| Navigate    | `navigate:https://...` | Navigate to URL        |
+| Scroll      | `scroll:500`           | Scroll by pixels       |
 
 Notes:
 
@@ -332,13 +332,13 @@ When to use pooling:
 
 Environment variables:
 
-| Variable                     | Default                      | Description                             |
-| ---------------------------- | ---------------------------- | --------------------------------------- |
-| `LEAN_BROWSER_POOL_SIZE`     | `5`                          | Max browser pool size                   |
-| `LEAN_BROWSER_SESSION_DIR`   | `/tmp/lean-browser-sessions` | Session metadata directory              |
-| `LEAN_BROWSER_MAX_SESSIONS`  | `10`                         | Max concurrent sessions                 |
-| `LEAN_BROWSER_URL_WHITELIST` | -                            | Comma-separated allowed host patterns   |
-| `LEAN_BROWSER_URL_BLACKLIST` | -                            | Comma-separated blocked host patterns   |
+| Variable                     | Default                      | Description                           |
+| ---------------------------- | ---------------------------- | ------------------------------------- |
+| `LEAN_BROWSER_POOL_SIZE`     | `5`                          | Max browser pool size                 |
+| `LEAN_BROWSER_SESSION_DIR`   | `/tmp/lean-browser-sessions` | Session metadata directory            |
+| `LEAN_BROWSER_MAX_SESSIONS`  | `10`                         | Max concurrent sessions               |
+| `LEAN_BROWSER_URL_WHITELIST` | -                            | Comma-separated allowed host patterns |
+| `LEAN_BROWSER_URL_BLACKLIST` | -                            | Comma-separated blocked host patterns |
 
 ## Troubleshooting
 
